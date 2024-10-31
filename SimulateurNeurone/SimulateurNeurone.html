@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html>
+<!-- Conception pédagogique, prototypage: Claude COULOMBE - Lingua Technologies -->
+<!-- Mise en page web, SVG, animation, graphisme: Jonathan POULIOT - Collegia / CÉGEP de Matane -->
+
+<head>
+	<title>Simulation d'un neurone artificiel</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+		/* 
+		   Couleur bordure: #3D85C6
+		   Remplissage: #CFE2F3FF
+        */
+		.hide {
+			display: none;
+		}
+
+		html,
+		body {
+			height: 100%;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			background-color: white;
+			border: none;
+
+			font-size: 16px;
+			font-size: 1em;
+			font-size: 1rem;
+
+			font-family: Arial, Helvetica, sans-serif;
+			overflow-x: hidden;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+		}
+
+		h2 {
+			font-size: 2rem;
+			margin-bottom: 1em;
+		}
+
+		#simulateur {
+			border: 2px solid #d1d1d1;
+			margin: 1em;
+			padding: 1em;
+		}
+
+		#page-title {
+			position: relative;
+		}
+
+		#page-title #title {
+			position: absolute;
+			top: -45px;
+			background-color: #fff;
+			display: inline;
+		}
+
+		#page-title #toggle-instructions {
+			text-decoration: none;
+			width: 48px;
+			height: 48px;
+			position: absolute;
+			top: -45px;
+			right: 0;
+			background-color: white;
+			border: 1px solid #d1d1d1;
+			stroke: #3d85c6;
+		}
+
+		#simulateur_neurone {
+			width: 100%;
+			display: grid;
+			/* grid-template-columns: 70% auto; */
+			grid-template-columns: 100% auto;
+			align-items: center;
+			min-height: 100%;
+		}
+
+		#simulateur_neurone #simulateur {
+			grid-column: 1;
+		}
+
+		#simulateur_neurone #instructions {
+			grid-column: 2;
+		}
+
+		.grid-container {
+			display: grid;
+			grid-template-columns: 15% auto 15% auto 40% auto 10%;
+			grid-template-rows: 1fr;
+		}
+
+		.calculation-container {
+			max-width: 30%;
+			width: 100%;
+			flex: 1 0 auto;
+		}
+
+		.total-container {
+			flex: 0 1 auto;
+		}
+
+		.sum_svg {
+			max-width: 48px;
+			width: 100%;
+			visibility: hidden;
+		}
+
+		.wrapper {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+			margin: 2em 0;
+		}
+
+		label.toggler {
+			cursor: pointer;
+			width: 60px;
+			height: 30px;
+			background-color: #aaaaaa;
+			display: block;
+			border-radius: 1000px;
+			position: relative;
+			text-indent: -9999px;
+		}
+
+		label.toggler:after {
+			content: "";
+			position: absolute;
+			top: 5px;
+			left: 3px;
+			width: 20px;
+			height: 20px;
+			background: #fff;
+			border-radius: 100px;
+			transition: 0.3s;
+		}
+
+		.toggle {
+			width: 0;
+			height: 0;
+			visibility: hidden;
+		}
+
+		.toggle:checked+label.toggler {
+			background-color: #3d85c6;
+		}
+
+		.toggle:checked:disabled+label.toggler {
+			background-color: #3d85c6;
+		}
+
+		.toggle:checked:disabled+label.toggler:after {
+			background-color: #bcc8d3;
+		}
+
+		.toggle:checked+label.toggler:after {
+			left: calc(100% - 3px);
+			transform: translateX(-100%);
+		}
+
+		.toggler-container {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+		}
+
+		.toggler-container span {
+			margin: 1em 0.5em;
+			font-weight: bold;
+		}
+
+		.row {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			margin: 1em 0;
+		}
+
+		.row .arrow-weight-container,
+		.row .arrow-ponderation-container {
+			padding: 0 1em;
+			width: 100px;
+		}
+
+		.arrow-ponderation-container[data-row="first"] {
+			transform: translateY(10px) rotate(15deg) !important;
+		}
+
+		.arrow-ponderation-container[data-row="last"] {
+			transform: translateY(-10px) rotate(-15deg) !important;
+		}
+
+		.weight-slider {
+			appearance: none;
+			height: 10px;
+			background: #cfe2f3;
+			border-radius: 5px;
+			opacity: 0.7;
+			transition: 0.2s opacity ease-in-out;
+		}
+
+		.weight-slider:hover {
+			opacity: 1;
+		}
+
+		.weight-slider::-webkit-slider-thumb {
+			appearance: none;
+			width: 42px;
+			height: 42px;
+			cursor: pointer;
+			background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MiA0MiI+PGcgZGF0YS1uYW1lPSJDYWxxdWUgMiI+PGcgZGF0YS1uYW1lPSJDYWxxdWUgMSIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTUuMSA0LjU5aDMydjMyaC0zMnoiLz48cGF0aCBkPSJNMjEuMSA4LjU5djI0bS00IDBoOG0tMTYtMjBsNCAxLjM0IDgtMi42NyA4IDIuNjcgNC0xLjM0bS0yMCAxLjM0bC00IDEyYTYuNjkgNi42OSAwIDAwOCAwbC00LTEybTE2IDBsLTQgMTJhNi42OSA2LjY5IDAgMDA4IDBsLTQtMTIiIHN0cm9rZT0iIzNkODVjNiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjIxIiByPSIyMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9IiMzZDg1YzYiIHN0cm9rZS13aWR0aD0iMiIvPjwvZz48L2c+PC9zdmc+");
+		}
+
+		.weight-slider::-moz-range-thumb {
+			appearance: none;
+			width: 42px;
+			height: 42px;
+			cursor: pointer;
+			background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MiA0MiI+PGcgZGF0YS1uYW1lPSJDYWxxdWUgMiI+PGcgZGF0YS1uYW1lPSJDYWxxdWUgMSIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTUuMSA0LjU5aDMydjMyaC0zMnoiLz48cGF0aCBkPSJNMjEuMSA4LjU5djI0bS00IDBoOG0tMTYtMjBsNCAxLjM0IDgtMi42NyA4IDIuNjcgNC0xLjM0bS0yMCAxLjM0bC00IDEyYTYuNjkgNi42OSAwIDAwOCAwbC00LTEybTE2IDBsLTQgMTJhNi42OSA2LjY5IDAgMDA4IDBsLTQtMTIiIHN0cm9rZT0iIzNkODVjNiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjIxIiByPSIyMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9IiMzZDg1YzYiIHN0cm9rZS13aWR0aD0iMiIvPjwvZz48L2c+PC9zdmc+");
+			background-color: transparent;
+			border: none;
+		}
+
+		.weight-slider::-ms-thumb {
+			appearance: none;
+			width: 42px;
+			height: 42px;
+			cursor: pointer;
+			background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MiA0MiI+PGcgZGF0YS1uYW1lPSJDYWxxdWUgMiI+PGcgZGF0YS1uYW1lPSJDYWxxdWUgMSIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTUuMSA0LjU5aDMydjMyaC0zMnoiLz48cGF0aCBkPSJNMjEuMSA4LjU5djI0bS00IDBoOG0tMTYtMjBsNCAxLjM0IDgtMi42NyA4IDIuNjcgNC0xLjM0bS0yMCAxLjM0bC00IDEyYTYuNjkgNi42OSAwIDAwOCAwbC00LTEybTE2IDBsLTQgMTJhNi42OSA2LjY5IDAgMDA4IDBsLTQtMTIiIHN0cm9rZT0iIzNkODVjNiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjIxIiByPSIyMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9IiMzZDg1YzYiIHN0cm9rZS13aWR0aD0iMiIvPjwvZz48L2c+PC9zdmc+");
+		}
+
+		.weight-slider+label {
+			display: inline-block;
+		}
+
+		.svg_button {
+			cursor: pointer;
+			fill: transparent;
+		}
+
+		.sum_button:hover {
+			fill: rgba(207, 226, 243, 0.5);
+		}
+
+		.activation_button:hover {
+			stroke-width: 2;
+		}
+
+		#instructions {
+			background-color: #ececec;
+			height: 100vh;
+		}
+
+		.accordion-toggle {
+			display: flex;
+			flex-direction: row;
+			padding: 1em;
+			background-color: #ececec;
+			border: 1px solid #d1d1d1;
+			text-decoration: none;
+			color: #000;
+			text-transform: uppercase;
+			width: 100%;
+		}
+
+		.accordion-toggle-title {
+			flex: 1 0 auto;
+		}
+
+		.accordion-toggle-icon {
+			font-weight: bold;
+		}
+
+		.accordion-content {
+			padding: 1em;
+			background-color: #fff;
+			border-left: 1px solid #d1d1d1;
+		}
+
+		.accordion-content p {
+			text-align: justify;
+			text-justify: distribute;
+		}
+
+		.accordion-content ol {
+			list-style-position: outside;
+		}
+
+		.accordion-content ol li {
+			margin-left: 1em;
+		}
+
+		.calculations-wrapper {
+			display: flex;
+			flex-direction: column;
+			margin-top: 2em;
+			padding: 1em;
+			width: 100%;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.calculations-wrapper .calculations {
+			background-color: #ececec;
+			padding: 1em;
+			text-align: center;
+			border: 1px solid #d1d1d1;
+			margin-top: 1em;
+			max-width: 75%;
+			width: 100%;
+		}
+
+		.tooltip {
+			position: relative;
+		}
+
+		.svg-tooltip {
+			position: relative;
+		}
+
+		.svg-tooltip.active::before {
+			width: 100% !important;
+		}
+
+		.tooltip.active::before {
+			position: absolute;
+			display: block;
+			top: 0;
+			left: 0;
+			transform: translateY(-125%);
+			background: #000;
+			color: #fff;
+			content: attr(data-tooltip);
+			padding: 1em;
+			width: 200px;
+			border-radius: 5px;
+			z-index: 1;
+			text-align: center;
+			pointer-events: none;
+		}
+	</style>
+</head>
+
+<body>
+
+	<section id="simulateur_neurone">
+		<div id="simulateur">
+			<header id="page-title">
+				<h1 id="title">
+					Simulation d'un neurone artificiel
+				</h1>
+				<!-- <a href="#" id="toggle-instructions" class="opened">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" fill="none"
+						stroke-linecap="round" stroke-linejoin="round">
+						<path stroke="none" d="M0 0h24v24H0z" />
+						<circle cx="12" cy="12" r="9" />
+						<path d="M12 8h.01M11 12h1v4h1" />
+					</svg>
+				</a> -->
+			</header>
+
+			<div class="wrapper">
+				<div class="inputs-container">
+					<div class="row">
+						<div class="toggler-container tooltip" data-tooltip="Biais du neurone, fix&eacute; &agrave; 1.0">
+							<span>0</span>
+							<input type="checkbox" class="toggle start-data" id="switchOne" checked disabled value="1">
+							<label class="toggler" for="switchOne">Toggler</label>
+							<span>1</span>
+						</div>
+						<div class="arrow-weight-container">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 19.54">
+								<path fill="#5393cc" d="M0 11.36h59.33l-3.48 8.18L79 9.77 55.85 0l3.48 8.19H0v3.17z"
+									class="weight-arrow" />
+							</svg>
+						</div>
+						<div class="slider-container tooltip" data-tooltip="Glissi&egrave;re pour donner un poids au biais.">
+							<input type="range" id="rangeOne" min="-1" max="1" value="0" step="0.01"
+								class="weight-slider first-weight">
+							<label for="rangeOne">0.00</label>
+						</div>
+						<div class="arrow-ponderation-container" data-row="first">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 19.54">
+								<path fill="#5393cc" d="M0 11.36h59.33l-3.48 8.18L79 9.77 55.85 0l3.48 8.19H0v3.17z"
+									class="ponderation-arrow" />
+							</svg>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="toggler-container tooltip" data-tooltip="Entr&eacute;e de la donn&eacute;e no. 1">
+							<span>0</span>
+							<input type="checkbox" class="start-data toggle" id="switchTwo">
+							<label class="toggler" for="switchTwo">Toggler</label>
+							<span>1</span>
+						</div>
+						<div class="arrow-weight-container">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 19.54">
+								<path fill="#5393cc" d="M0 11.36h59.33l-3.48 8.18L79 9.77 55.85 0l3.48 8.19H0v3.17z"
+									class="weight-arrow" />
+							</svg>
+						</div>
+						<div class="slider-container tooltip"
+							data-tooltip="Glissi&egrave;re pour donner un poids &agrave; l'entr&eacute;e no. 1">
+							<input type="range" id="rangeTwo" min="-1" max="1" value="0" step="0.01"
+								class="weight-slider">
+							<label for="rangeTwo">0.00</label>
+						</div>
+						<div class="arrow-ponderation-container">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 19.54">
+								<path fill="#5393cc" d="M0 11.36h59.33l-3.48 8.18L79 9.77 55.85 0l3.48 8.19H0v3.17z"
+									class="ponderation-arrow" />
+							</svg>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="toggler-container tooltip" data-tooltip="Entr&eacute;e de la donn&eacute;e no. 2">
+							<span>0</span>
+							<input type="checkbox" class="start-data toggle" id="switchThree">
+							<label class="toggler" for="switchThree">Toggler</label>
+							<span>1</span>
+						</div>
+						<div class="arrow-weight-container">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 19.54">
+								<path fill="#5393cc" d="M0 11.36h59.33l-3.48 8.18L79 9.77 55.85 0l3.48 8.19H0v3.17z"
+									class="weight-arrow" />
+							</svg>
+						</div>
+						<div class="slider-container tooltip"
+							data-tooltip="Glissi&egrave;re pour donner un poids &agrave; l'entr&eacute;e no. 2">
+							<input type="range" id="rangeThree" min="-1" max="1" value="0" step="0.01"
+								class="weight-slider">
+							<label for="rangeThree">0.00</label>
+						</div>
+						<div class="arrow-ponderation-container" data-row="last">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 19.54">
+								<path fill="#5393cc" d="M0 11.36h59.33l-3.48 8.18L79 9.77 55.85 0l3.48 8.19H0v3.17z"
+									class="ponderation-arrow" />
+							</svg>
+						</div>
+					</div>
+				</div>
+				<div class="calculation-container">
+					<div class="svg-tooltip tooltip" data-tooltip="Calcul de la somme pond&eacute;r&eacute;e des entr&eacute;es">
+					</div>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 522 320">
+						<ellipse cx="258.5" cy="157.5" rx="258.5" ry="157.5" transform="translate(2.5 2.5)" fill="none"
+							stroke="#3d85c6" stroke-miterlimit="10" stroke-width="5" />
+						<path d="M217 3v314" fill="none" stroke="#3d85c6" stroke-miterlimit="10" stroke-width="5" />
+						<g class="sum_button svg_button tooltip" data-tooltip="Calcul de la somme pond&eacute;r&eacute;e des entr&eacute;es"
+							fill="transparent" stroke="#3d85c6" stroke-width="5">
+							<path
+								d="M112.265 88.951a70.774 70.774 0 11-70.774 70.774 70.774 70.774 0 0170.774-70.774z" />
+							<path d="M88.674 159.726h47.183" stroke-linejoin="round" />
+							<path d="M112.265 136.134v47.183" stroke-linejoin="round" />
+						</g>
+						<g class="svg_button activation_button" data-tooltip="Activation: &Eacute;chelon"
+							data-activation="echelon" transform="translate(-889 -1357.5)">
+							<path stroke="#efefef" d="M1270.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1335 1489h-76" />
+							<path stroke="#efefef" d="M1322.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1333 1437h-71" />
+							<path stroke="#efefef" d="M1287.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1472h-90" />
+							<path stroke="#efefef" d="M1261.5 1493.5v-58" />
+							<path stroke="#efefef" d="M1328 1498h-63" />
+							<path stroke="#efefef" d="M1313.5 1506.5v-85" />
+							<path stroke="#efefef" d="M1339 1446h-84" />
+							<path stroke="#efefef" d="M1278.5 1505.5v-84" />
+							<path stroke="#efefef" d="M1339 1481h-85" />
+							<path stroke="#efefef" d="M1330.5 1496.5v-66" />
+							<path stroke="#efefef" d="M1326 1429h-59" />
+							<path stroke="#efefef" d="M1304.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1455h-90" />
+							<path stroke="#aaa" d="M1296.5 1508.5v-90" />
+							<path stroke="#aaa" d="M1341 1463h-90" />
+							<path d="M1270.553 1463h25.984v-26h26.221" stroke="#000" />
+							<rect width="88.317" height="91.849" rx="43.717" transform="translate(1252.5 1418.141)"
+								stroke="#3d85c6" stroke-width="5" />
+						</g>
+						<g class="svg_button activation_button"
+							data-tooltip="Activation: Courbe en S centr&eacute;e sur 0 ou tanh" data-activation="tanh"
+							transform="translate(-1003.794 -1357.5)">
+							<path stroke="#efefef" d="M1270.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1335 1489h-76" />
+							<path stroke="#efefef" d="M1322.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1333 1437h-71" />
+							<path stroke="#efefef" d="M1287.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1472h-90" />
+							<path stroke="#efefef" d="M1261.5 1493.5v-58" />
+							<path stroke="#efefef" d="M1328 1498h-63" />
+							<path stroke="#efefef" d="M1313.5 1506.5v-85" />
+							<path stroke="#efefef" d="M1339 1446h-84" />
+							<path stroke="#efefef" d="M1278.5 1505.5v-84" />
+							<path stroke="#efefef" d="M1339 1481h-85" />
+							<path stroke="#efefef" d="M1330.5 1496.5v-66" />
+							<path stroke="#efefef" d="M1326 1429h-59" />
+							<path stroke="#efefef" d="M1304.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1455h-90" />
+							<path stroke="#aaa" d="M1296.5 1508.5v-90" />
+							<path stroke="#aaa" d="M1341 1463h-90" />
+							<rect width="88.317" height="91.849" rx="43.717" transform="translate(1252.5 1418.141)"
+								stroke="#3d85c6" stroke-width="5" />
+							<path d="M1270.5 1489h17.031c10.84 0 6.871-52.063 17.384-52.063h18.247" stroke="#000" />
+						</g>
+						<g class="svg_button activation_button"
+							data-tooltip="Activation: Courbe en S positive ou sigmo&iuml;de" data-activation="sigmoide"
+							transform="translate(-1003.794 -1250.637)">
+							<path stroke="#efefef" d="M1270.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1335 1489h-76" />
+							<path stroke="#efefef" d="M1322.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1333 1437h-71" />
+							<path stroke="#efefef" d="M1287.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1472h-90" />
+							<path stroke="#efefef" d="M1261.5 1493.5v-58" />
+							<path stroke="#efefef" d="M1328 1498h-63" />
+							<path stroke="#efefef" d="M1313.5 1506.5v-85" />
+							<path stroke="#efefef" d="M1339 1446h-84" />
+							<path stroke="#efefef" d="M1278.5 1505.5v-84" />
+							<path stroke="#efefef" d="M1339 1481h-85" />
+							<path stroke="#efefef" d="M1330.5 1496.5v-66" />
+							<path stroke="#efefef" d="M1326 1429h-59" />
+							<path stroke="#efefef" d="M1304.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1455h-90" />
+							<path stroke="#aaa" d="M1296.5 1508.5v-90" />
+							<path stroke="#aaa" d="M1341 1463h-90" />
+							<rect width="88.317" height="91.849" rx="43.717" transform="translate(1252.5 1418.141)"
+								stroke="#3d85c6" stroke-width="5" />
+							<path d="M1261.568 1463.048h19.175c10.84 0 18.389-26.111 28.9-26.111h17.449"
+								stroke="#000" />
+						</g>
+						<g class="svg_button activation_button" data-tooltip="Activation: Rampe droite positive ou ReLU"
+							data-activation="relu" transform="translate(-889 -1250.637)">
+							<path stroke="#efefef" d="M1270.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1335 1489h-76" />
+							<path stroke="#efefef" d="M1322.5 1502.5v-77" />
+							<path stroke="#efefef" d="M1333 1437h-71" />
+							<path stroke="#efefef" d="M1287.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1472h-90" />
+							<path stroke="#efefef" d="M1261.5 1493.5v-58" />
+							<path stroke="#efefef" d="M1328 1498h-63" />
+							<path stroke="#efefef" d="M1313.5 1506.5v-85" />
+							<path stroke="#efefef" d="M1339 1446h-84" />
+							<path stroke="#efefef" d="M1278.5 1505.5v-84" />
+							<path stroke="#efefef" d="M1339 1481h-85" />
+							<path stroke="#efefef" d="M1330.5 1496.5v-66" />
+							<path stroke="#efefef" d="M1326 1429h-59" />
+							<path stroke="#efefef" d="M1304.5 1508.5v-90" />
+							<path stroke="#efefef" d="M1341 1455h-90" />
+							<path stroke="#aaa" d="M1296.5 1508.5v-90" />
+							<path stroke="#aaa" d="M1341 1463h-90" />
+							<rect width="88.317" height="91.849" rx="43.717" transform="translate(1252.5 1418.141)"
+								stroke="#3d85c6" stroke-width="5" />
+							<path d="M1261.5 1463h35.007l26.023-26.043" stroke="#000" />
+						</g>
+					</svg>
+				</div>
+				<div class="total-container">
+					<div class="row">
+						<div class="arrow-weight-container">
+							<!-- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 19.54">
+								<path fill="#5393cc" d="M0 11.36h59.33l-3.48 8.18L79 9.77 55.85 0l3.48 8.19H0v3.17z"
+									class="weight-arrow out" />
+							</svg> -->
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79 29.54">
+								<path d="M0,19.36H59.33L55.85,29.54,79,12.77,55.85,0l3.48,8.19H0Z" fill="#5393cc"
+									class="weight-arrow" />
+							</svg>
+
+						</div>
+						<span id="affichage_activation"></span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44.698 76" class="sum_svg">
+							<g fill="none">
+								<g class="sum_svg_lightning">
+									<path d="M.349 0h32v32h-32z" />
+									<path d="M17.683 4v9.333h8L15.016 28v-9.333h-8L17.683 4" stroke="#3d85c6"
+										stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+								</g>
+								<g class="sum_svg_lightning">
+									<path d="M.349 76h32V44h-32z" />
+									<path d="M17.683 72v-9.333h8L15.016 48v9.333h-8L17.683 72" stroke="#3d85c6"
+										stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+								</g>
+								<g class="sum_svg_lightning">
+									<path d="M25.888 60.705l18.816-25.888-25.888-18.816L0 41.889z" />
+									<path
+										d="M32.844 44.33l-7.55-5.488 4.704-6.472-18.138.005 7.55 5.488-4.703 6.472 18.137-.005"
+										stroke="#3d85c6" stroke-linecap="round" stroke-linejoin="round"
+										stroke-width="2.00022" />
+								</g>
+							</g>
+						</svg>
+					</div>
+				</div>
+			</div>
+
+			<section class="calculations-wrapper">
+				<h3>
+					Calcul fait par le neurone
+				</h3>
+				<div class="calculations" id="affichage_du_calcul"></div>
+			</section>
+		</div>
+<!--
+		<aside id="instructions">
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Description</span>
+					<span class="accordion-toggle-icon">&minus;</span>
+				</a>
+				<article class="accordion-content opened">
+					<h2>Simulation d'un neurone artificiel</h2>
+
+					<p> De gauche &agrave; droite, le simulateur comporte d'abord un s&eacute;rie d'entr&eacute;es (ou
+						signaux) repr&eacute;sent&eacute; par de petits boutons radios permettant de choisir des valeurs
+						entre 0 ou 1.
+						<br><br>
+						&Agrave; chaque entr&eacute;e on associe un poids (la force du signal) repr&eacute;sent&eacute;e
+						par une glissi&egrave;re avec l'ic&ocirc;ne d'une balance. Pour simplifier, nous avons
+						limit&eacute; notre neurone artificiel &agrave; deux entr&eacute;es: (entr&eacute;e_1 et
+						entr&eacute;e_2) plus le bias. En r&eacute;alit&eacute;, un neurone artificiel peut comporter
+						des milliers
+						d'entr&eacute;es en plus du biais. Consid&eacute;rez le biais comme un contr&ocirc;le
+						suppl&eacute;mentaire qui ajoute un degr&eacute; de libert&eacute; au calcul du neurone.
+					</p>
+					<br>
+					<p>Ces signaux avec leurs poids entrent ensuite dans le corps du neurone qui fait des calculs
+						&agrave; sur ces entr&eacute;es. Les calculs se font en deux &eacute;tapes: une premi&egrave;re
+						&eacute;tape est la somme pond&eacute;r&eacute;e des entr&eacute;es (repr&eacute;sent&eacute;e
+						par le bouton avec un +) et la deuxi&egrave;me &eacute;tape est l'activation du neurone, un des
+						quatre boutons avec une courbe dessin&eacute;e dessus.
+					</p>
+					<br>
+
+					<p>La somme pond&eacute;r&eacute;e consiste &agrave; additionner la valeur de chaque entr&eacute;e
+						qui est multipli&eacute;e par son poids associ&eacute;. Dans le cas de notre neurone simple, le
+						calcul est: somme_pond&eacute;r&eacute;e = entr&eacute;e_1 x poids_1 + entr&eacute;e_2 x poids_2
+						+ biais x poids_biais. Le calcul de l'activation prend le r&eacute;sultat du calcul
+						pr&eacute;c&eacute;dent (i.e. la somme pond&eacute;r&eacute;e) et lui applique une fonction
+						math&eacute;matique dite fonction d'activation. Il existe plusieurs fonctions d'activation
+						diff&eacute;rentes et notre simulateur vous propose de choisir parmi les quatre plus
+						utilis&eacute;es.
+					<p>
+						<br>
+
+					<ol>
+						<li>L'&eacute;chelon qui produit des r&eacute;sultats entre 0 et 1 avec un seuil de 0.
+							Il est caract&eacute;ris&eacute; par un brusque passage de 0 &agrave; 1 en z&eacute;ro.
+							Son seuil de d&eacute;clenchement est pour une valeur sup&eacute;rieure &agrave;
+							z&eacute;ro.</li>
+
+						<li>La courbe en S positive (ou sigmo&iuml;de) qui produit des r&eacute;sultats entre 0
+							et 1 avec un seuil &agrave; 0.5</li>
+
+						<li>La courbe en S centr&eacute;e sur z&eacute;ro (ou tangente hyperbolique) qui donne
+							un r&eacute;sultat entre -1 et +1 avec un seuil &agrave; z&eacute;ro.</li>
+
+						<li>La rampe droite (ou unit&eacute; lin&eacute;aire rectifi&eacute;e, en
+							anglais ReLU) qui retourne un r&eacute;sultat entre 0 et +infini. Son seuil de
+							d&eacute;clenchement est pour une valeur sup&eacute;rieure &agrave; z&eacute;ro. Notez que
+							la rampe droite (ReLU) est la fonction d'activation la plus souvent utilis&eacute;e avec les
+							r&eacute;seaux de neurones profonds.</li>
+					</ol>
+					<br>
+					<p>Le r&eacute;sultat du calcul de l'activation se retrouve &agrave; la sortie du neurone
+						&agrave; l'extr&ecirc;me droite. De petits &eacute;clairs indiquent que le neurone
+						est d&eacute;clench&eacute;. C'est-&agrave;-dire que la valeur de sa sortie d&eacute;passe
+						le seuil de d&eacute;clenchement et prend la valeur +1, sinon la valeur de la sortie est 0.
+					</p>
+					<br>
+					<p>Finalement, une zone sous le sch&eacute;ma du neurone affiche le d&eacute;tail du calcul.</p>
+				</article>
+			</div>
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Familiarisation</span>
+					<span class="accordion-toggle-icon">&plus;</span>
+				</a>
+				<article class="accordion-content hide">
+					<h2>Familiarisation avec le fonctionnement du neurone artificiel</h2>
+
+					<p>En guise de familiarisation, commencez par jouer &raquo;librement&raquo; avec les
+						donn&eacute;es d'entr&eacute;e 1 et 2 qui sont binaires et peuvent donc prendre les valeurs 0 ou
+						1 (en
+						cliquant sur des boutons radios) et les glissi&egrave;res avec l'ic&ocirc;ne de balance qui
+						servent &agrave; pond&eacute;rer ces entr&eacute;es par une valeur entre -1 et +1. Vous pouvez
+						&eacute;galement contr&ocirc;ler le poids appliqu&eacute; au biais (fix&eacute; &agrave; 1),
+						en haut &agrave; gauche.</p>
+					<br>
+					<p>Une fois les entr&eacute;es choisies et pond&eacute;r&eacute;es, vous pouvez calculer la
+						sortie du neurone en cliquant le bouton avec une courbe en S (sigmo&iuml;de) ce qui implique le
+						calcul de la somme pond&eacute;r&eacute;e des entr&eacute;es suivi de l'activation du neurone.
+						Vous pouvez &eacute;galement afficher uniquement le r&eacute;sultat du calcul de la somme
+						pond&eacute;r&eacute;e en cliquant sur le bouton avec un +.</p>
+					<br>
+					<p>Vous pouvez changer l'activation du neurone (sa fonction d'activation) en cliquant un bouton
+						d'activation avec une autre courbe.
+					</p>
+				</article>
+			</div>
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Exercices dirig&eacute;s</span>
+					<span class="accordion-toggle-icon">&plus;</span>
+				</a>
+				<article class="accordion-content hide">
+					<h2>Exercices dirig&eacute;s - les op&eacute;rations logiques</h2>
+
+					<p>Le biais et les poids_1 et poids_2 sont les param&egrave;tres du neurone. Et en changeant ces
+						param&egrave;tres, ce neurone fonctionnera comme des portes logiques telles que ET (en
+						anglais AND),
+						OU (en anglais OR), NON (en anglais NOT), NON-ET (en anglais NAND) et NON-OU (en anglais
+						NOR).</p>
+					<br>
+					<p><strong>Note:</strong> Inutile de vous &eacute;chiner &agrave; trouver la formule magique
+						pour
+						cr&eacute;er un op&eacute;rateur OU EXCLUSIF (en anglais XOR) ou NON OU EXCLUSIF (en anglais
+						XNOR)
+						avec un seul neurone. Cela fait partie des limitations connues et qui ont &eacute;t&eacute;
+						&agrave;
+						l'origine d'une certaine incompr&eacute;hension dans les ann&eacute;es 60. En fait, il faut
+						au moins
+						deux couches de neurones pour cr&eacute;er un OU EXCLUSIF.
+					</p>
+				</article>
+			</div>
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Neurone ET</span>
+					<span class="accordion-toggle-icon">&plus;</span>
+				</a>
+				<article class="accordion-content hide">
+					<h2>Neurone ET</h2>
+
+					<ol>
+						<li>Placez le poids du biais aux environs de -0.60<br />Rappelez-vous que la valeur du biais
+							est toujours fix&eacute;e &agrave; 1.0</li>
+						<li>Choisissez l'activation &laquo;Courbe en S positive (sigmo&iuml;de)&raquo;.<br />
+							Le seuil de d&eacute;clenchement de la sigmo&iuml;de se trouve au milieu de l'intervalle
+							soit &agrave; 0.5</li>
+						<li>R&eacute;glez les entr&eacute;es 1 et 2 &agrave; 0.50</li>
+						<li>V&eacute;rifiez que le neurone se comporte comme un op&eacute;rateur logique ET</li>
+					</ol>
+				</article>
+			</div>
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Neurone OU</span>
+					<span class="accordion-toggle-icon">&plus;</span>
+				</a>
+				<article class="accordion-content hide">
+					<h2>Neurone OU</h2>
+
+					<ol>
+						<li>Placez le poids du biais aux environs de -0.25.</li>
+						<li>Choisissez l'activation &laquo;Courbe en S positive (sigmo&iuml;de)&raquo;.</li>
+						<li>R&eacute;glez les entr&eacute;es 1 et 2 &agrave; 0.50</li>
+						<li>V&eacute;rifiez que le neurone se comporte comme un op&eacute;rateur logique OU</li>
+					</ol>
+				</article>
+			</div>
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Neurone NON</span>
+					<span class="accordion-toggle-icon">&plus;</span>
+				</a>
+				<article class="accordion-content hide">
+					<h2>Neurone NON</h2>
+
+					<ol>
+						<li>Placez d'abord le poids du biais aux environs de 0.5</li>
+						<li>Choisissez l'activation &laquo;Courbe en S positive (sigmo&iuml;de)&raquo;.</li>
+						<li>Ensuite, &eacute;liminez l'effet de l'entr&eacute;e 2 en la fixant &agrave;
+							0.<br />L'op&eacute;ration de n&eacute;gation se fera uniquement sur l'entr&eacute;e 1.
+						</li>
+						<li>R&eacute;glez l'entr&eacute;e 1 &agrave; -0.7</li>
+						<li>V&eacute;rifiez que le neurone se comporte comme un op&eacute;rateur logique NON</li>
+					</ol>
+				</article>
+			</div>
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Neurone NON ET</span>
+					<span class="accordion-toggle-icon">&plus;</span>
+				</a>
+				<article class="accordion-content hide">
+					<h2>Neurone NON ET</h2>
+
+					<ol>
+						<li>Placez d'abord le poids du biais aux environs de 0.6</li>
+						<li>Choisissez l'activation &laquo;Courbe en S positive (sigmo&iuml;de)&raquo;.</li>
+						<li>R&eacute;glez les entr&eacute;es 1 et 2 &agrave; -0.50</li>
+						<li>V&eacute;rifiez que le neurone se comporte comme un op&eacute;rateur logique NON ET</li>
+					</ol>
+				</article>
+			</div>
+			<div class="accordion-section">
+				<a href="#" class="accordion-toggle">
+					<span class="accordion-toggle-title">Neurone NON OU</span>
+					<span class="accordion-toggle-icon">&plus;</span>
+				</a>
+				<article class="accordion-content hide">
+					<h2>Neurone NON OU</h2>
+
+					<ol>
+						<li>Placez d'abord le poids du biais aux environs de 0.25</li>
+						<li>Choisissez l'activation &laquo;Courbe en S positive (sigmo&iuml;de)&raquo;.</li>
+						<li>R&eacute;glez les entr&eacute;es 1 et 2 &agrave; -0.50</li>
+						<li>V&eacute;rifiez que le neurone se comporte comme un op&eacute;rateur logique NON OU</li>
+					</ol>
+				</article>
+			</div>
+		</aside> -->
+	</section>
+
+	<script>
+		class Neurone {
+			constructor(donnees_entree, poids_donnees_entree, biais = 1, poids_biais = 1.0, fn_activation = 'echelon') {
+				this.donnees_entree = donnees_entree;
+				if (poids_donnees_entree) {
+					this.poids_donnees_entree = poids_donnees_entree;
+				} else {
+					// Initialiser avec des poids choisis aléatoirement
+					this.poids_donnees_entree = new Array(donnees_entree.length)
+					for (let i = 0; i < donnees_entree.length; i++) {
+						this.poids_donnees_entree[i] = nombreAleatoire() * 2 - 1;
+					}
+				}
+				this.biais = biais;
+				this.poids_biais = poids_biais;
+				this.somme_ponderee_donnees_entree = 0.0;
+				this.fn_activation = fn_activation;
+				this.neurone_actif = false;
+				this.resultat_activation = 0.0;
+				this.calcul_a_afficher = "";
+				// this.afficher();
+			}
+			afficher(indicateur = true) {
+				if (indicateur) {
+					afficherMessage("");
+					afficherMessage("Etat du Neurone");
+					afficherMessage("donnees_entree: " + this.donnees_entree);
+					afficherMessage("poids_donnees_entree: " + this.poids_donnees_entree);
+					afficherMessage("biais: " + this.biais);
+					afficherMessage("poids_biais: " + this.poids_biais);
+					afficherMessage("somme_ponderee_donnees_entree: " + this.somme_ponderee_donnees_entree);
+					afficherMessage("fn_activation: " + this.fn_activation);
+					afficherMessage("neurone_actif: " + this.neurone_actif);
+					afficherMessage("resultat_activation: " + this.resultat_activation);
+					afficherMessage("calcul_a_afficher: " + this.calcul_a_afficher);
+					afficherMessage("");
+				}
+			}
+			// Fonctions d'activation https://en.wikipedia.org/wiki/Activation_function
+			// Échelon ou échelon binaire (en anglais, binary step)	
+			// Note: il faut prendre l'échelon -1,+1, pas 0,+1		
+      		echelon(x) {
+       			return (x > 0) ? 1 : -1;
+      		}
+			// Courbe en S verticale entre 0 et +1 
+			// Appelée fonction sigmoïde ou fonction logistique
+			sigmoide(x) {
+				return (1 / (1 + Math.pow(Math.E,-x)));
+			}
+			// Fonction tanh ou tangente_hyperbolique
+			tangente_hyperbolique(x) {
+				return Math.tanh(x);
+			}
+			// Fonction ReLU (Rectified Linear Unit)
+			relu(x) {
+				return (x < 0) ? 0 : x;
+			}
+			// Fonction sommation - somme ponderée des entrées
+			somme_ponderee() {
+				var somme_ponderee_donnees_entree = this.biais * this.poids_biais;
+				this.poids_donnees_entree.forEach((poids, index) => {
+					// Jonathan Pouliot: Ignorer la première entrée puisqu'elle arrive du premier biais déjà préparé à 1.0 x slider.value
+					if (index > 0) {
+						somme_ponderee_donnees_entree += this.donnees_entree[index] * poids;
+					}
+					return somme_ponderee_donnees_entree;
+				});
+				this.somme_ponderee_donnees_entree = somme_ponderee_donnees_entree;
+				return this.somme_ponderee_donnees_entree;
+			}
+			activation_neurone() {
+				this.calcul_a_afficher = "";
+				var x = this.somme_ponderee(); // Jonathan Pouliot: Assigné à une variable, car erreur de console.
+				switch (this.fn_activation) {
+					case "echelon":
+						this.resultat_activation = parseFloat(fixerPrecision(this.echelon(x)));
+						this.calcul_a_afficher = "&eacute;chelon( " + fixerPrecision(x) + " ) = " + fixerPrecision(this.resultat_activation, 2);
+						this.calcul_a_afficher += "<br><br>Activation: &Eacute;chelon, entre 0 et +1, avec un seuil de d&eacute;clenchement pour une valeur sup&eacute;rieure &agrave; z&eacute;ro";
+						if (this.resultat_activation > 0.0) {
+							this.calcul_a_afficher += "<br>Notez que le neurone est 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = true;
+							this.resultat_activation = 1.0;
+						} else {
+							this.calcul_a_afficher += "<br>Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = false;
+							this.resultat_activation = 0.0;
+						}
+						break;
+					case "sigmoide":
+						this.resultat_activation = parseFloat(fixerPrecision(this.echelon(x)));
+						this.calcul_a_afficher = "sigmo" + "&iuml;" + "de( " + fixerPrecision(x, 2) + " ) = " + fixerPrecision(this.resultat_activation, 2);
+						this.calcul_a_afficher += "<br><br>Activation: Courbe en S positive, entre 0 et +1, ou sigmo&iuml;de, ou fonction logistique, avec un seuil de d&eacute;clenchement &agrave; 0.5";
+						if (this.resultat_activation >= 0.5) {
+							this.calcul_a_afficher += "<br>Notez que le neurone est 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = true;
+							this.resultat_activation = 1.0;
+						} else {
+							this.calcul_a_afficher += "<br>Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = false;
+							this.resultat_activation = 0.0;
+						}
+						break;
+					case "tanh":
+						this.resultat_activation = parseFloat(fixerPrecision(this.tangente_hyperbolique(x)));
+						this.calcul_a_afficher = "tanh( " + fixerPrecision(x, 2) + " ) = " + fixerPrecision(this.resultat_activation, 2);
+						this.calcul_a_afficher += "<br><br>Activation: Courbe en S centr&eacute;e sur z&eacute;ro, entre -1 et +1 ou tangente hyperbolique, avec un seuil de d&eacute;clenchement pour une valeur sup&eacute;rieure &agrave; z&eacute;ro";
+						if (this.resultat_activation > 0.0) {
+							this.calcul_a_afficher += "<br>Notez que le neurone est 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = true;
+							this.resultat_activation = 1.0;
+						} else {
+							this.calcul_a_afficher += "<br>Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = false;
+							this.resultat_activation = 0.0;
+						}
+						break;
+					case "relu":
+						this.resultat_activation = parseFloat(fixerPrecision(this.relu(x)));
+						this.calcul_a_afficher = "relu( " + fixerPrecision(x, 2) + " ) = " + fixerPrecision(this.resultat_activation, 2);
+						this.calcul_a_afficher += "<br><br>Activation: Rampe droite &agrave; positive ou unit&eacute lin&eacute;aire rectifi&eacute;e, en anglais ReLU, avec un seuil de d&eacute;clenchement pour une valeur sup&eacute;rieure &agrave; z&eacute;ro";
+						if (this.resultat_activation > 0.0) {
+							this.calcul_a_afficher += "<br>Notez que le neurone est 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = true;
+							this.resultat_activation = 1.0;
+						} else {
+							this.calcul_a_afficher += "<br>Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+							this.neurone_actif = false;
+							this.resultat_activation = 0.0;
+						}
+						break;
+					default:
+						this.resultat_activation = "ERREUR";
+				}
+				return this.resultat_activation;
+			}
+		}
+
+		var sortie_affichage_calcul = document.querySelector('#affichage_du_calcul');
+		var sortie_activation = document.querySelector('#affichage_activation');
+
+		// Nombre aleatoire entre 0 et 1
+		function nombreAleatoire() {
+			return Math.random();
+		}
+
+    	function fixerPrecision(num, precision = 2) {
+       		return num.toFixed(precision);
+    	}
+
+		function afficherMessage(message) {
+			var element = document.createElement('strong');
+			element.innerHTML = message + '<br/>';
+			document.body.appendChild(element);
+		}
+
+		/** 
+		* Toutes les fonctions suivantes ont été rajouté par 
+		* Jonathan Pouliot (Groupe Collegia) 
+		 * */
+		function toggleAccordion() {
+			var toggles = document.querySelectorAll(".accordion-toggle");
+
+			if (toggles.length) {
+
+				toggles.forEach(function (toggle) {
+					toggle.addEventListener('click', function (e) {
+						e.preventDefault();
+
+						var content = e.currentTarget.nextElementSibling;
+						var icon = e.currentTarget.querySelector('.accordion-toggle-icon');
+
+						if (content.classList.contains('opened')) {
+							content.classList.remove('opened');
+							content.classList.add('hide');
+							icon.innerHTML = "&plus;";
+						} else {
+							content.classList.add('opened');
+							content.classList.remove('hide');
+							icon.innerHTML = "&minus;";
+						}
+					})
+				});
+			}
+		}
+
+		// Afficher/Cacher le panneau d'instructions
+		function toggleInstructions() {
+			var toggler = document.querySelector("#toggle-instructions");
+
+			if (toggler) {
+
+				var instructionsPanel = document.querySelector("#instructions");
+				var layout = document.querySelector("#simulateur_neurone");
+
+				toggler.addEventListener('click', function (e) {
+					e.preventDefault();
+
+					var link = e.currentTarget;
+
+					if (link.classList.contains('opened')) {
+						link.classList.remove('opened');
+						instructionsPanel.classList.add('hide');
+						layout.style.gridTemplateColumns = "auto";
+					} else {
+						link.classList.add('opened');
+						instructionsPanel.classList.remove('hide');
+						layout.style.gridTemplateColumns = "70% auto";
+					}
+				});
+			}
+		}
+
+		/**
+		 * Utilisation de JS au lieu d'utiliser du CSS3 pur
+		 * Trop de glitch à mon goût dans la version CSS
+		 * 
+		 * Workaround pour la partie SVG
+		 */
+		function toggleTooltips() {
+			var tooltips = document.querySelectorAll('[data-tooltip]');
+
+			tooltips.forEach(function (tooltip) {
+				tooltip.addEventListener('mouseenter', function (e) {
+					var current = e.currentTarget;
+					current.classList.add('active');
+
+					if (current.classList.contains('svg_button')) {
+						var tooltipText = current.dataset.tooltip;
+
+						var svgTooltipContainer = document.querySelector('.svg-tooltip');
+
+						svgTooltipContainer.dataset.tooltip = tooltipText;
+						svgTooltipContainer.classList.add('active');
+
+					}
+
+				});
+				tooltip.addEventListener('mouseleave', function (e) {
+					var current = e.currentTarget;
+					current.classList.remove('active');
+
+					if (current.classList.contains('svg_button')) {
+						var svgTooltipContainer = document.querySelector('.svg-tooltip');
+						svgTooltipContainer.classList.remove('active');
+					}
+				});
+			});
+		}
+
+		// Affiche la valeur des sliders
+		function slidersValue() {
+			var sliders = document.querySelectorAll('.weight-slider');
+
+			if (sliders.length) {
+				sliders.forEach(function (slider) {
+					slider.addEventListener('input', function (e) {
+						var value = e.target.value;
+						slider.nextElementSibling.innerHTML = parseFloat(value).toFixed(2);
+					});
+				});
+			}
+		}
+
+		/**
+		 * Récupère les données à partir du UI
+		 * 
+		 * @param {bool} startData TRUE pour les données d'entrées, FALSE pour les poids
+		 */
+		function getData(startData = false) {
+			var datas = null;
+
+			// Données d'entrée
+			if (startData) {
+				datas = document.querySelectorAll('.start-data');
+
+				return [].map.call(datas, function (data) {
+					return data.checked ? 1 : 0;
+				});
+			} else { // Données de poids
+				datas = document.querySelectorAll('.weight-slider');
+
+				return [].map.call(datas, function (data) {
+					return parseFloat(data.value);
+				});
+			}
+
+		}
+		function sleep(durationInMilliseconds) {
+			return new Promise(resolve => setTimeout(resolve, durationInMilliseconds));
+		}
+
+		// Calcul de la somme
+		function calculateSum() {
+			var sumBtn = document.querySelector(".sum_button");
+
+			if (sumBtn) {
+				sumBtn.addEventListener('click', function () {
+					var donnees_entree = getData(true);
+					var poids_donnees_entree = getData(false);
+
+					neurone = new Neurone(donnees_entree, poids_donnees_entree, donnees_entree[0], poids_donnees_entree[0]);
+					neurone.somme_ponderee();
+
+					affichage_somme_ponderee = `${donnees_entree[0]} x ${poids_donnees_entree[0]} + ${donnees_entree[1]} x ${poids_donnees_entree[1]} + ${donnees_entree[2]} x ${poids_donnees_entree[2]}`;
+
+					sortie_affichage_calcul.innerHTML = "Calcul en cours...";
+					setTimeout(() => {
+						sortie_affichage_calcul.innerHTML = affichage_somme_ponderee + " = " + fixerPrecision(neurone.somme_ponderee_donnees_entree);
+					}, 1000);
+
+				});
+			}
+		}
+
+		// Application de la fonction d'activation du neurone
+		function activation() {
+			var declenchement = document.querySelector('.sum_svg');
+			var activations = document.querySelectorAll('.activation_button');
+
+			var fonction_activation = "";
+
+			if (activations.length) {
+				
+				activations.forEach(function (button) {
+					button.addEventListener('click', function (e) {
+						var donnees_entree = getData(true);
+						var poids_donnees_entree = getData(false);
+
+						fonction_activation = e.currentTarget.dataset.activation;
+
+						neurone = new Neurone(donnees_entree, poids_donnees_entree, donnees_entree[0], poids_donnees_entree[0], fonction_activation);
+						neurone.activation_neurone();
+
+						sortie_affichage_calcul.innerHTML = "Calcul en cours...";
+						setTimeout(() => {
+							sortie_affichage_calcul.innerHTML = neurone.calcul_a_afficher;
+							sortie_activation.innerHTML = "&nbsp;&nbsp;" + fixerPrecision(neurone.resultat_activation);
+
+							if (neurone.neurone_actif) {
+								declenchement.style.visibility = "visible";
+							} else {
+								declenchement.style.visibility = "hidden";
+							}
+						}, 1000);
+
+					});
+				});
+			}
+		}
+
+		document.addEventListener('DOMContentLoaded', function () {
+			toggleAccordion();
+			toggleInstructions();
+			toggleTooltips();
+			slidersValue();
+			calculateSum();
+			activation();
+		});
+	</script>
+</body>
+
+</html>

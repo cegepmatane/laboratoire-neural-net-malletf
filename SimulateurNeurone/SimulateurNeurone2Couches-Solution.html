@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html>
+<!-- Travail original en JavaScript par John Fisher https://github.com/jg-fisher/perceptron -->
+<!-- Également inspiré par Petro Liashchynskyi: https://github.com/liashchynskyi/skynet/ -->
+<!-- et Andrew Trask: https://iamtrask.github.io/2015/07/12/basic-python-network/ -->
+<!-- Refactorisation et améliorations de Claude COULOMBE -->
+
+<head>
+  <title>R&eacute;seau de neurones &agrave; deux couches</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    html,
+    body {
+      height: 100%;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: white;
+      border: none;
+
+      font-size: 16px;
+      font-size: 1em;
+      font-size: 1rem;
+
+      font-family: Arial, Helvetica, sans-serif;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 1em;
+    }
+
+    #simulateur {
+      border: 2px solid #d1d1d1;
+      margin: 2em 1em 1em;
+      padding: 1em;
+    }
+
+    #page-title {
+      position: relative;
+    }
+
+    #page-title #title {
+      position: absolute;
+      top: -45px;
+      background-color: #fff;
+      display: inline;
+    }
+
+    .switch:not(.disabled) {
+      cursor: pointer;
+    }
+
+    .wrapper {
+      position: relative;
+    }
+
+    .tooltip {
+      position: absolute;
+      padding: 1em;
+      background-color: #000;
+      color: #fff;
+      max-width: 250px;
+      border-radius: 5px;
+      text-align: center;
+      pointer-events: none;
+      top: 0;
+      left: 0;
+      display: none;
+      margin-top: 0.5em;
+    }
+
+    .slider-knob {
+      cursor: pointer;
+    }
+
+    .calculations-wrapper {
+      display: flex;
+      flex-direction: column;
+      margin-top: 2em;
+      padding: 1em;
+      width: 100%;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .calculations-wrapper .calculations {
+      background-color: #ececec;
+      padding: 1em;
+      text-align: center;
+      border: 1px solid #d1d1d1;
+      margin-top: 1em;
+      max-width: 50%;
+      width: 100%;
+    }
+
+    .btn {
+      margin-bottom: 1em;
+      padding: 1em;
+      text-align: center;
+      display: inline-block;
+      min-width: 10%;
+      border: 2px solid #3d85c6;
+      background-color: #cfe2f3ff;
+      color: #000;
+      text-decoration: none;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .btn:hover {
+      background-color: #3d85c6;
+      color: #fff;
+    }
+
+    .out-arrow,
+    .sum,
+    .trigger {
+      visibility: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <section id="simulateur_neurone">
+    <div id="simulateur">
+      <header id="page-title">
+        <h1 id="title">
+          Simulation d'un r&eacute;seau de neurones &agrave; deux couches
+        </h1>
+      </header>
+
+      <div class="wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 697">
+
+          <g transform="translate(641.896 120.981)">
+            <ellipse cx="127.556" cy="77.982" rx="127.556" ry="77.982" transform="translate(0)" fill="none"
+              stroke="#3d85c6" stroke-miterlimit="10" stroke-width="5" />
+            <path d="M975.5,471.5V627.464" transform="translate(-847.88 -471.5)" fill="none" stroke="#3d85c6"
+              stroke-miterlimit="10" stroke-width="5" />
+            <g transform="translate(29.726 39.181)">
+              <path d="M838.81,557.451a38.819,38.819,0,1,1-38.819,38.819A38.819,38.819,0,0,1,838.81,557.451Z"
+                transform="translate(-799.991 -557.451)" fill="none" stroke="#3d85c6" stroke-linecap="round"
+                stroke-width="5" />
+              <path d="M847.174,628.226h25.879" transform="translate(-821.295 -589.407)" fill="none" stroke="#3d85c6"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="5" />
+              <path d="M870.765,604.634v25.879" transform="translate(-831.946 -578.755)" fill="none" stroke="#3d85c6"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="5" />
+            </g>
+            <g transform="translate(147.876 39.181)">
+              <line y1="64.891" transform="translate(16.434 6.202)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="64.049" transform="translate(6.742 59.716)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="64.891" transform="translate(60.256 6.202)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="59.835" transform="translate(9.27 15.893)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(30.76 0.303)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 45.389) rotate(-90)" fill="none" stroke="#d1d1d1"
+                stroke-width="1" />
+              <line y1="48.879" transform="translate(8.849 14.629)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="53.093" transform="translate(11.798 67.301)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="71.633" transform="translate(52.672 2.831)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="70.791" transform="translate(3.371 23.478)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="70.791" transform="translate(23.175 2.831)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="71.633" transform="translate(2.528 52.974)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="55.621" transform="translate(66.998 10.415)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="49.722" transform="translate(13.484 9.151)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(45.087 0.303)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 31.063) rotate(-90)" fill="none" stroke="#d1d1d1"
+                stroke-width="1" />
+              <line y1="75.847" transform="translate(38.345 0.303)" fill="none" stroke="#aaa" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 37.805) rotate(-90)" fill="none" stroke="#aaa"
+                stroke-width="1" />
+              <path d="M1137.224,581.081h21.9V559.169h22.1" transform="translate(-1120.746 -543.276)" fill="none"
+                stroke="#000" stroke-width="1" />
+              <rect width="74.429" height="77.405" rx="37.214" transform="translate(1.264)" fill="none" stroke="#3d85c6"
+                stroke-width="5" />
+            </g>
+          </g>
+          <g transform="translate(641.896 434.993)">
+            <ellipse cx="127.556" cy="77.982" rx="127.556" ry="77.982" transform="translate(0)" fill="none"
+              stroke="#3d85c6" stroke-miterlimit="10" stroke-width="5" />
+            <path d="M975.5,471.5V627.464" transform="translate(-847.88 -471.5)" fill="none" stroke="#3d85c6"
+              stroke-miterlimit="10" stroke-width="5" />
+            <g transform="translate(29.726 39.181)">
+              <path d="M838.81,557.451a38.819,38.819,0,1,1-38.819,38.819A38.819,38.819,0,0,1,838.81,557.451Z"
+                transform="translate(-799.991 -557.451)" fill="none" stroke="#3d85c6" stroke-linecap="round"
+                stroke-width="5" />
+              <path d="M847.174,628.226h25.879" transform="translate(-821.295 -589.407)" fill="none" stroke="#3d85c6"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="5" />
+              <path d="M870.765,604.634v25.879" transform="translate(-831.946 -578.755)" fill="none" stroke="#3d85c6"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="5" />
+            </g>
+            <g transform="translate(147.876 39.181)">
+              <line y1="64.891" transform="translate(16.434 6.202)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="64.049" transform="translate(6.742 59.716)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="64.891" transform="translate(60.256 6.202)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="59.835" transform="translate(9.27 15.893)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(30.76 0.303)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 45.389) rotate(-90)" fill="none" stroke="#d1d1d1"
+                stroke-width="1" />
+              <line y1="48.879" transform="translate(8.849 14.629)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="53.093" transform="translate(11.798 67.301)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="71.633" transform="translate(52.672 2.831)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="70.791" transform="translate(3.371 23.478)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="70.791" transform="translate(23.175 2.831)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="71.633" transform="translate(2.528 52.974)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="55.621" transform="translate(66.998 10.415)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="49.722" transform="translate(13.484 9.151)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(45.087 0.303)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 31.063) rotate(-90)" fill="none" stroke="#d1d1d1"
+                stroke-width="1" />
+              <line y1="75.847" transform="translate(38.345 0.303)" fill="none" stroke="#aaa" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 37.805) rotate(-90)" fill="none" stroke="#aaa"
+                stroke-width="1" />
+              <path d="M1137.224,581.081h21.9V559.169h22.1" transform="translate(-1120.746 -543.276)" fill="none"
+                stroke="#000" stroke-width="1" />
+              <rect width="74.429" height="77.405" rx="37.214" transform="translate(1.264)" fill="none" stroke="#3d85c6"
+                stroke-width="5" />
+            </g>
+          </g>
+          <g transform="translate(1429.443 272.848)">
+            <ellipse cx="127.556" cy="77.982" rx="127.556" ry="77.982" transform="translate(0)" fill="none"
+              stroke="#3d85c6" stroke-miterlimit="10" stroke-width="5" />
+            <path d="M975.5,471.5V627.464" transform="translate(-847.88 -471.5)" fill="none" stroke="#3d85c6"
+              stroke-miterlimit="10" stroke-width="5" />
+            <g transform="translate(29.726 39.181)">
+              <path d="M838.81,557.451a38.819,38.819,0,1,1-38.819,38.819A38.819,38.819,0,0,1,838.81,557.451Z"
+                transform="translate(-799.991 -557.451)" fill="none" stroke="#3d85c6" stroke-linecap="round"
+                stroke-width="5" />
+              <path d="M847.174,628.226h25.879" transform="translate(-821.295 -589.407)" fill="none" stroke="#3d85c6"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="5" />
+              <path d="M870.765,604.634v25.879" transform="translate(-831.946 -578.755)" fill="none" stroke="#3d85c6"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="5" />
+            </g>
+            <g transform="translate(147.876 39.181)">
+              <line y1="64.891" transform="translate(16.434 6.202)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="64.049" transform="translate(6.742 59.716)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="64.891" transform="translate(60.256 6.202)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="59.835" transform="translate(9.27 15.893)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(30.76 0.303)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 45.389) rotate(-90)" fill="none" stroke="#d1d1d1"
+                stroke-width="1" />
+              <line y1="48.879" transform="translate(8.849 14.629)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="53.093" transform="translate(11.798 67.301)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="71.633" transform="translate(52.672 2.831)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="70.791" transform="translate(3.371 23.478)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="70.791" transform="translate(23.175 2.831)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="71.633" transform="translate(2.528 52.974)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="55.621" transform="translate(66.998 10.415)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line x1="49.722" transform="translate(13.484 9.151)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(45.087 0.303)" fill="none" stroke="#d1d1d1" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 31.063) rotate(-90)" fill="none" stroke="#d1d1d1"
+                stroke-width="1" />
+              <line y1="75.847" transform="translate(38.345 0.303)" fill="none" stroke="#aaa" stroke-width="1" />
+              <line y1="75.847" transform="translate(0 37.805) rotate(-90)" fill="none" stroke="#aaa"
+                stroke-width="1" />
+              <path d="M1137.224,581.081h21.9V559.169h22.1" transform="translate(-1120.746 -543.276)" fill="none"
+                stroke="#000" stroke-width="1" />
+              <rect width="74.429" height="77.405" rx="37.214" transform="translate(1.264)" fill="none" stroke="#3d85c6"
+                stroke-width="5" />
+            </g>
+          </g>
+          <g transform="translate(9.352 81.627)">
+            <g transform="translate(21.822 0)" class="switch disabled"
+              data-tooltip="Biais du neurone cach&eacute; no 1, fix&eacute; &agrave; 1.0">
+              <rect width="65.465" height="28.056" rx="14.028" fill="#3d85c6" />
+              <circle cx="11.95" cy="11.95" r="11.95" transform="translate(39.487 2.078)" fill="#bcc8d3" />
+            </g><text transform="translate(0 21.078)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">0</tspan>
+            </text><text transform="translate(95.6 21.078)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">1</tspan>
+            </text>
+          </g>
+          <g transform="translate(918.588 342.448)">
+            <g transform="translate(20.783 0)" class="switch disabled"
+              data-tooltip="Biais du neurone de sortie, fix&eacute; &agrave; 1.0">
+              <rect width="66.504" height="28.056" rx="14.028" transform="translate(0)" fill="#3d85c6" />
+              <circle cx="11.95" cy="11.95" r="11.95" transform="translate(40.526 2.078)" fill="#bcc8d3" />
+            </g><text transform="translate(0 21.078)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">0</tspan>
+            </text><text transform="translate(94.561 21.078)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">1</tspan>
+            </text>
+          </g>
+          <g transform="translate(9.352 289.452)">
+            <g transform="translate(21.822 0)" class="switch" data-tooltip="Entr&eacute;e ou attribut no 1"
+              data-checked="false" data-value="0">
+              <rect width="65.465" height="28.056" rx="14.028" transform="translate(0 0)" fill="#b3b3b3" />
+              <ellipse cx="11.43" cy="11.95" rx="11.43" ry="11.95" transform="translate(2.078 2.078)" fill="#fff" />
+            </g><text transform="translate(0 21.078)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">0</tspan>
+            </text><text transform="translate(95.6 21.078)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">1</tspan>
+            </text>
+          </g>
+          <g transform="translate(9.352 394.404)">
+            <g transform="translate(21.822 0)" class="switch" data-tooltip="Entr&eacute;e ou attribut no 2" data-value="0">
+              <rect width="65.465" height="28.056" rx="14.028" transform="translate(0 0)" fill="#b3b3b3" />
+              <ellipse cx="11.43" cy="11.43" rx="11.43" ry="11.43" transform="translate(2.078 3.117)" fill="#fff" />
+            </g><text transform="translate(0 22.117)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">0</tspan>
+            </text><text transform="translate(95.6 22.117)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">1</tspan>
+            </text>
+          </g>
+          <g transform="translate(9.352 603.092)">
+            <g transform="translate(21.313 0)" class="switch disabled"
+              data-tooltip="Biais du neurone cach&eacute; no 2, fix&eacute; &agrave; 1.0">
+              <path d="M13.993,0H52.055a13.993,13.993,0,0,1,0,27.987H13.993A13.993,13.993,0,0,1,13.993,0Z"
+                fill="#3d85c6" />
+              <circle cx="11.95" cy="11.95" r="11.95" transform="translate(39.995 2.255)" fill="#bcc8d3" />
+            </g><text transform="translate(0 21.255)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">0</tspan>
+            </text><text transform="translate(95.6 21.255)" font-size="21" font-family="ArialMT, Arial">
+              <tspan x="0" y="0">1</tspan>
+            </text>
+          </g>
+          <g transform="translate(1869.955 307.552)" class="trigger">
+            <g transform="translate(0.391)">
+              <path d="M.349,0H36.172V35.823H.349Z" transform="translate(-0.349)" fill="none" />
+              <path d="M18.957,4V14.448h8.956L15.972,30.867V20.419H7.016L18.957,4" transform="translate(0.448 0.478)"
+                fill="none" stroke="#3d85c6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            </g>
+            <g transform="translate(0.391 49.257)">
+              <path d="M.349,79.823H36.172V44H.349Z" transform="translate(-0.349 -44)" fill="none" />
+              <path d="M18.957,74.867V64.419h8.956L15.972,48V58.448H7.016L18.957,74.867"
+                transform="translate(0.448 -43.522)" fill="none" stroke="#3d85c6" stroke-linecap="round"
+                stroke-linejoin="round" stroke-width="2" />
+            </g>
+            <g transform="translate(0 17.913)">
+              <path d="M28.981,66.046,50.045,37.065,21.064,16,0,44.982Z" transform="translate(0 -16.001)" fill="none" />
+              <path d="M35.351,45.759,26.9,39.615l5.266-7.245-20.3.006,8.452,6.144-5.265,7.245,20.3-.006"
+                transform="translate(1.417 -14.045)" fill="none" stroke="#3d85c6" stroke-linecap="round"
+                stroke-linejoin="round" stroke-width="2" />
+            </g>
+          </g><text transform="translate(1794.573 360.096)" font-size="30" font-family="ArialMT, Arial" class="sum">
+            <tspan x="0" y="0">1.00</tspan>
+          </text>
+          <g transform="translate(217.177 61.883)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 22.861)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="19.743" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="18.743" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob" data-tooltip="Poids du biais du neurone cach&eacute; 1">
+                <g transform="translate(0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.733" rx="33.252" ry="32.733" stroke="none" />
+                  <ellipse cx="33.252" cy="32.733" rx="32.752" ry="32.233" fill="none" />
+                </g>
+                <g transform="translate(7.357 7.275)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="39.487" transform="translate(24.856 6.234)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.66 45.721)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 39.783)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">-0.10</tspan>
+            </text>
+          </g>
+
+          <g transform="translate(217.177 166.835)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 21.822)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="20.783" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="19.783" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob" data-tooltip="Poids de l'entr&eacute;e 1 du neurone cach&eacute; 1">
+                <g transform="translate(0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.213" rx="33.252" ry="32.213" stroke="none" />
+                  <ellipse cx="33.252" cy="32.213" rx="32.752" ry="31.713" fill="none" />
+                </g>
+                <g transform="translate(7.357 6.434)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="38.448" transform="translate(24.856 7.075)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.66 45.523)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 38.743)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">0.35</tspan>
+            </text>
+          </g>
+          <g transform="translate(217.177 270.748)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 21.822)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="20.783" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="19.783" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob" data-tooltip="Poids de l'entr&eacute;e 2 du neurone cach&eacute; 1">
+                <g transform="translate(0 0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.213" rx="33.252" ry="32.213" stroke="none" />
+                  <ellipse cx="33.252" cy="32.213" rx="32.752" ry="31.713" fill="none" />
+                </g>
+                <g transform="translate(7.357 6.632)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="39.487" transform="translate(24.856 6.877)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.66 46.364)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 38.743)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">0.14</tspan>
+            </text>
+          </g>
+          <g transform="translate(217.177 375.7)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 22.861)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="19.743" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="18.743" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob" data-tooltip="Poids de l'entr&eacute;e 1 du neurone cach&eacute; 2">
+                <g transform="translate(0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.733" rx="33.252" ry="32.733" stroke="none" />
+                  <ellipse cx="33.252" cy="32.733" rx="32.752" ry="32.233" fill="none" />
+                </g>
+                <g transform="translate(7.357 6.91)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="39.487" transform="translate(24.856 6.598)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.66 46.085)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 39.783)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">-0.68</tspan>
+            </text>
+          </g>
+          <g transform="translate(217.177 479.613)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 22.861)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="19.743" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="18.743" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob" data-tooltip="Poids de l'entr&eacute;e 2 du neurone cach&eacute; 2">
+                <g transform="translate(0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.733" rx="33.252" ry="32.733" stroke="none" />
+                  <ellipse cx="33.252" cy="32.733" rx="32.752" ry="32.233" fill="none" />
+                </g>
+                <g transform="translate(7.357 7.108)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="39.487" transform="translate(24.856 6.4)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.66 45.887)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 39.783)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">-0.05</tspan>
+            </text>
+          </g>
+          <g transform="translate(217.177 584.565)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 21.822)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="19.743" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="18.743" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob" data-tooltip="Poids du biais du neurone cach&eacute; 2">
+                <g transform="translate(0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.213" rx="33.252" ry="32.213" stroke="none" />
+                  <ellipse cx="33.252" cy="32.213" rx="32.752" ry="31.713" fill="none" />
+                </g>
+                <g transform="translate(7.357 6.267)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="39.487" transform="translate(24.856 6.202)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.66 45.689)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 38.743)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">0.70</tspan>
+            </text>
+          </g>
+          <g transform="translate(1099.397 231.261)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 22.861)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="19.743" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="18.743" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob"
+                data-tooltip="Poids de l'entr&eacute;e 1 du neurone de sortie">
+                <g transform="translate(0 0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.733" rx="33.252" ry="32.733" stroke="none" />
+                  <ellipse cx="33.252" cy="32.733" rx="32.752" ry="32.233" fill="none" />
+                </g>
+                <g transform="translate(7.281 6.937)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="39.487" transform="translate(24.932 6.571)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.737 46.058)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 39.783)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">0.21</tspan>
+            </text>
+          </g>
+          <g transform="translate(1099.397 323.743)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 21.822)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="19.743" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="18.743" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob" data-tooltip="Poids du biais du neurone de sortie">
+                <g transform="translate(0 0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.213" rx="33.252" ry="32.213" stroke="none" />
+                  <ellipse cx="33.252" cy="32.213" rx="32.752" ry="31.713" fill="none" />
+                </g>
+                <g transform="translate(7.281 6.251)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="39.487" transform="translate(24.932 6.218)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.737 45.705)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 38.743)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">-0.30</tspan>
+            </text>
+          </g>
+          <g transform="translate(1099.397 415.187)" class="slider">
+            <g transform="translate(0 0)">
+              <g transform="translate(0 21.822)" fill="#cfe2f3" stroke="#6198cc" stroke-width="1" class="slider-track">
+                <rect width="174.573" height="20.783" rx="5" stroke="none" />
+                <rect x="0.5" y="0.5" width="173.573" height="19.783" rx="4.5" fill="none" />
+              </g>
+              <g transform="translate(55 0)" class="slider-knob"
+                data-tooltip="Poids de l'entr&eacute;e 2 du neurone de sortie">
+                <g transform="translate(0 0)" fill="#fff" stroke="#707070" stroke-width="1">
+                  <ellipse cx="33.252" cy="32.213" rx="33.252" ry="32.213" stroke="none" />
+                  <ellipse cx="33.252" cy="32.213" rx="32.752" ry="31.713" fill="none" />
+                </g>
+                <g transform="translate(7.281 6.605)">
+                  <path d="M0,0H51.6V51.6H0Z" fill="none" />
+                  <line y2="38.448" transform="translate(24.932 6.904)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <line x2="13.509" transform="translate(19.737 45.352)" fill="none" stroke="#6198cc"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M3,7.15,9.451,9.3,22.352,5l12.9,4.3L41.7,7.15" transform="translate(3.451 5.751)" fill="none"
+                    stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M9.451,7,3,26.352a10.751,10.751,0,0,0,12.9,0L9.451,7" transform="translate(3.451 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                  <path d="M21.451,7,15,26.352a10.751,10.751,0,0,0,12.9,0L21.451,7" transform="translate(17.253 8.051)"
+                    fill="none" stroke="#6198cc" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+                </g>
+              </g>
+            </g><text transform="translate(189.121 38.743)" font-size="21" font-family="ArialMT, Arial"
+              class="slider-value">
+              <tspan x="0" y="0">0.18</tspan>
+            </text>
+          </g>
+          <g transform="translate(127.45 85.146)">
+            <line x2="69.792" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,0,20.533,14.346H0Z" transform="translate(81.899 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(1038.699 347.627)">
+            <line x2="45.477" transform="translate(0 8.622)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M8.622,0l8.622,11.572H0Z" transform="translate(51.264 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(1700.47 341.031)" class="out-arrow">
+            <line x2="75.549" transform="translate(0 11.92)" fill="none" stroke="#6198cc" stroke-width="10" />
+            <path d="M11.92,0,23.84,19.224H0Z" transform="translate(85.161 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(1345.434 347.627)">
+            <line x2="64.584" transform="translate(0 8.622)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M8.622,0l8.622,16.434H0Z" transform="translate(72.801 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="matrix(0.875, 0.485, -0.485, 0.875, 1348.664, 258.069)">
+            <line x2="85.925" transform="translate(0 8.622)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M8.622,0l8.622,21.864H0Z" transform="translate(96.857 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="matrix(0.875, -0.485, 0.485, 0.875, 1340.304, 439.347)">
+            <line x2="85.925" transform="translate(0 8.622)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M8.622,21.864,17.244,0H0Z" transform="translate(74.993 17.244) rotate(-90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(914.749 208.715) rotate(14)">
+            <line x2="155.73" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,0,20.533,32.01H0Z" transform="translate(182.744 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(909.782 487.775) rotate(-14)">
+            <line x2="155.73" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,32.01,20.533,0H0Z" transform="translate(150.734 20.533) rotate(-90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(467.843 188.697)">
+            <line x2="142.643" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,0,20.533,29.32H0Z" transform="translate(167.387 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(467.843 499.743)">
+            <line x2="142.643" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,0,20.533,29.32H0Z" transform="translate(167.387 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(474.528 89.421) rotate(19)">
+            <line x2="150.932" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,31.024,20.533,0H0Z" transform="translate(146.09 20.533) rotate(-90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(474.528 400.468) rotate(19)">
+            <line x2="150.932" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,31.024,20.533,0H0Z" transform="translate(146.09 20.533) rotate(-90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(467.843 294.854) rotate(-19)">
+            <line x2="150.932" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,0,20.533,31.024H0Z" transform="translate(177.114 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(467.843 605.901) rotate(-19)">
+            <line x2="150.932" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,0,20.533,31.024H0Z" transform="translate(177.114 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(116.823 292.608) rotate(-45)">
+            <line y1="5.216" x2="104.104" transform="translate(0 9.609)" fill="none" stroke="#6198cc"
+              stroke-width="5" />
+            <path d="M8.7,0,19.554,21.888,0,20.908Z" transform="translate(122.162 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(118.337 395.308) rotate(-45)">
+            <line y1="5.063" x2="101.062" transform="translate(0 9.614)" fill="none" stroke="#6198cc"
+              stroke-width="5" />
+            <path d="M8.736,0,19.554,21.263,0,20.283Z" transform="translate(118.593 0) rotate(90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(130.597 303.521) rotate(45)">
+            <line x2="105.649" y2="5.293" transform="translate(0 4.653)" fill="none" stroke="#6198cc"
+              stroke-width="5" />
+            <path d="M8.689,22.206,19.554,0,0,.98Z" transform="translate(101.77 19.554) rotate(-90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(132.047 407.195) rotate(45)">
+            <line x2="104.459" y2="5.234" transform="translate(0 4.711)" fill="none" stroke="#6198cc"
+              stroke-width="5" />
+            <path d="M8.7,21.961,19.554,0,0,.98Z" transform="translate(100.618 19.554) rotate(-90)" fill="#6198cc" />
+          </g>
+          <g transform="translate(127.45 606.819)">
+            <line x2="69.792" transform="translate(0 10.267)" fill="none" stroke="#6198cc" stroke-width="5" />
+            <path d="M10.267,0,20.533,14.346H0Z" transform="translate(81.899 0) rotate(90)" fill="#6198cc" />
+          </g>
+        </svg>
+        <span class="tooltip"></span>
+      </div>
+
+      <section class="calculations-wrapper">
+        <a href="#" class="training-btn btn">
+          Simuler
+        </a>
+        <h3>
+          Calcul fait par le neurone
+        </h3>
+        <div class="calculations">
+
+        </div>
+      </section>
+    </div>
+
+  </section>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.6.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.6.0/Draggable.min.js"></script>
+  <script>
+
+    class Neurone {
+      constructor(donnees_entree, poids_donnees_entree, biais = 1, poids_biais = 1.0, fn_activation = 'echelon') {
+        this.donnees_entree = donnees_entree;
+        if (poids_donnees_entree) {
+          this.poids_donnees_entree = poids_donnees_entree;
+        } else {
+          // Initialiser avec des poids choisis aléatoirement
+          this.poids_donnees_entree = new Array(donnees_entree.length)
+          for (let i = 0; i < donnees_entree.length; i++) {
+            this.poids_donnees_entree[i] = nombreAleatoire() * 2 - 1;
+          }
+        }
+        this.biais = biais;
+        this.poids_biais = poids_biais;
+        this.somme_ponderee_donnees_entree = 0.0;
+        this.fn_activation = fn_activation;
+        this.neurone_actif = false;
+        this.resultat_activation = 0.0;
+        this.calcul_a_afficher = "";
+        // this.afficher();
+      }
+      afficher(indicateur = true) {
+        if (indicateur) {
+          afficherMessage("");
+          afficherMessage("Etat du Neurone");
+          afficherMessage("donnees_entree: " + this.donnees_entree);
+          afficherMessage("poids_donnees_entree: " + this.poids_donnees_entree);
+          afficherMessage("biais: " + this.biais);
+          afficherMessage("poids_biais: " + this.poids_biais);
+          afficherMessage("somme_ponderee_donnees_entree: " + this.somme_ponderee_donnees_entree);
+          afficherMessage("fn_activation: " + this.fn_activation);
+          afficherMessage("neurone_actif: " + this.neurone_actif);
+          afficherMessage("resultat_activation: " + this.resultat_activation);
+          afficherMessage("calcul_a_afficher: " + this.calcul_a_afficher);
+          afficherMessage("");
+        }
+      }
+      // Fonctions d'activation https://en.wikipedia.org/wiki/Activation_function
+      // Échelon ou échelon binaire (en anglais, binary step)     
+      echelon(x) {
+        return (x <= 0) ? 0 : 1;
+      }
+      // Courbe en S verticale entre 0 et +1 
+      // Appelée fonction sigmoïde ou fonction logistique
+      sigmoide(x) {
+        return (1 / (1 + Math.pow(Math.E, -x)));
+      }
+      // Fonction tanh ou tangente_hyperbolique
+      tangente_hyperbolique(x) {
+        return Math.tanh(x);
+      }
+      // Fonction ReLU (Rectified Linear Unit)
+      relu(x) {
+        return (x <= 0) ? 0 : x;
+      }
+      // Fonction sommation - somme ponderée des entrées
+      somme_ponderee() {
+        var somme_ponderee_donnees_entree = this.biais * this.poids_biais;
+        this.poids_donnees_entree.forEach((poids, index) => { somme_ponderee_donnees_entree += this.donnees_entree[index] * poids });
+        this.somme_ponderee_donnees_entree = somme_ponderee_donnees_entree;
+        return this.somme_ponderee_donnees_entree;
+      }
+      activation_neurone() {
+        this.calcul_a_afficher = "";
+        var x = this.somme_ponderee_donnees_entree;
+        switch (this.fn_activation) {
+          case "echelon":
+            this.resultat_activation = this.echelon(x);
+            this.calcul_a_afficher = "&eacute;chelon( " + arrondir(x) + " ) = " + arrondir(this.resultat_activation, 2);
+            this.calcul_a_afficher += "<br>Activation: &Eacute;chelon, entre 0 et +1, avec un seuil de d&eacute;clenchement &agrave; z&eacute;ro";
+            if (this.resultat_activation > 0.0) {
+              this.calcul_a_afficher += "<br>Notez que le neurone est 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = true;
+              this.resultat_activation = 1.0;
+            } else {
+              this.calcul_a_afficher += "<br>Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = false;
+              this.resultat_activation = 0.0;
+            }
+            break;
+          case "sigmoide":
+            this.resultat_activation = this.sigmoide(x);
+            this.calcul_a_afficher = "sigmo" + "&iuml;" + "de( " + arrondir(x, 2) + " ) = " + arrondir(this.resultat_activation, 2);
+            this.calcul_a_afficher += " - Activation: Courbe en S positive, entre 0 et +1, ou sigmo&iuml;de, ou fonction logistique, avec un seuil de d&eacute;clenchement &agrave; 0.5";
+            if (this.resultat_activation > 0.5) {
+              this.calcul_a_afficher += " - Notez que le neurone est 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = true;
+              this.resultat_activation = 1.0;
+            } else {
+              this.calcul_a_afficher += " - Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = false;
+              this.resultat_activation = 0.0;
+            }
+            break;
+          case "tanh":
+            this.resultat_activation = this.tangente_hyperbolique(x);
+            this.calcul_a_afficher = "tanh( " + arrondir(x, 2) + " ) = " + arrondir(this.resultat_activation, 2);
+            this.calcul_a_afficher += " - Activation: Courbe en S centr&eacute;e sur z&eacute;ro, entre -1 et +1 ou tangente hyperbolique, avec un seuil de d&eacute;clenchement &agrave; z&eacute;ro";
+            if (this.resultat_activation > 0.0) {
+              this.calcul_a_afficher += " - Notez que le neurone est 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = true;
+              this.resultat_activation = 1.0;
+            } else {
+              this.calcul_a_afficher += " - Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = false;
+              this.resultat_activation = 0.0;
+            }
+            break;
+          case "relu":
+            this.resultat_activation = this.relu(x);
+            this.calcul_a_afficher = "relu( " + arrondir(x, 2) + " ) = " + arrondir(this.resultat_activation, 2);
+            this.calcul_a_afficher += " - Activation: Rampe droite &agrave; 45 degr&eacute; ou unit&eacute lin&eacute;aire rectifi&eacute;e, en anglais ReLU, avec un seuil de d&eacute;clenchement &agrave; z&eacute;ro";
+            if (this.resultat_activation > 0.0) {
+              this.calcul_a_afficher += " - Notez que le neurone est 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = true;
+              this.resultat_activation = 1.0;
+            } else {
+              this.calcul_a_afficher += " - Notez que le neurone n'est pas 'd&eacute;clench&eacute;'.";
+              this.neurone_actif = false;
+              this.resultat_activation = 0.0;
+            }
+            break;
+          default:
+            this.resultat_activation = "ERREUR";
+        }
+        return this.resultat_activation;
+      }
+    }
+
+    // Nombre aleatoire entre 0 et 1
+    function nombreAleatoire() {
+      return Math.random();
+    }
+
+    function arrondir(num, precision = 2) {
+      var base = 10 ** precision;
+      return (Math.round(num * base) / base).toFixed(precision);
+    }
+
+    function afficherMessage(message, indicateur = true) {
+      if (indicateur) {
+        var element = document.createElement('strong');
+        element.innerHTML = message + '<br/>';
+        document.body.appendChild(element);
+      }
+    }
+
+    const entree_biais_nc1 = 1.0
+    const entree_biais_nc2 = 1.0
+    const entree_biais_ns = 1.0
+
+    function demarrer_simulateur() {
+
+      // Reset
+      const outArrow = document.querySelector('.out-arrow');
+      const sum = document.querySelector('.sum')
+      const trigger = document.querySelector('.trigger');
+      const calculations = document.querySelector('.calculations');
+
+      [outArrow, sum, trigger].forEach(element => {
+        element.style.visibility = 'hidden';
+      });
+      calcul_a_afficher = "";
+
+
+      // Récupérer les entrées
+      const entrees = document.querySelectorAll('.switch:not(.disabled)');
+      const poids = document.querySelectorAll(".slider-value");
+
+      const entree1 = parseFloat(entrees[0].dataset.value);
+      const entree2 = parseFloat(entrees[1].dataset.value);
+      const poids_biais_nc1 = parseFloat(poids[0].textContent);
+      const poids_entree1_nc1 = parseFloat(poids[1].textContent);
+      const poids_entree2_nc1 = parseFloat(poids[2].textContent);
+      const poids_entree1_nc2 = parseFloat(poids[3].textContent);
+      const poids_entree2_nc2 = parseFloat(poids[4].textContent);
+      const poids_biais_nc2 = parseFloat(poids[5].textContent);
+      const poids_entree1_ns = parseFloat(poids[6].textContent);
+      const poids_biais_ns = parseFloat(poids[7].textContent);
+      const poids_entree2_ns = parseFloat(poids[8].textContent);
+
+
+
+      calculations.innerHTML = "Calcul en cours...";
+      setTimeout(() => {
+        calcul_a_afficher += `Entr&eacute;e 1: ${entree1}<br>Entr&eacute;e 2: ${entree2}`;
+
+        const poids_donnees_entree_nc1 = [poids_entree1_nc1, poids_entree2_nc1];
+
+
+        const donnees_entree_nc1 = [entree1, entree2];
+        neurone_nc1 = new Neurone(donnees_entree_nc1, poids_donnees_entree_nc1, entree_biais_nc1, poids_biais_nc1, 'echelon');
+        neurone_nc1.somme_ponderee();
+        neurone_nc1_sortie = neurone_nc1.activation_neurone();
+        calcul_a_afficher += `<br><br>Neurone 1 couche cach&eacute;e: ${neurone_nc1.calcul_a_afficher}`;
+
+        const donnees_entree_nc2 = [entree1, entree2];
+        const poids_donnees_entree_nc2 = [poids_entree1_nc2, poids_entree2_nc2];
+        neurone_nc2 = new Neurone(donnees_entree_nc2, poids_donnees_entree_nc2, entree_biais_nc2, poids_biais_nc2, 'echelon');
+        neurone_nc2.somme_ponderee();
+        neurone_nc2_sortie = neurone_nc2.activation_neurone();
+        calcul_a_afficher += `<br><br>Neurone 2 couche cach&eacute;e: ${neurone_nc2.calcul_a_afficher}`;
+
+        const donnees_entree_ns = [neurone_nc1_sortie, neurone_nc2_sortie];
+        const poids_donnees_entree_ns = [poids_entree1_ns, poids_entree2_ns];
+        neurone_ns = new Neurone(donnees_entree_ns, poids_donnees_entree_ns, entree_biais_ns, poids_biais_ns, 'echelon');
+        neurone_ns.somme_ponderee();
+        neurone_ns_sortie = neurone_ns.activation_neurone();
+        calcul_a_afficher += `<br><br>Neurone couche sortie: ${neurone_ns.calcul_a_afficher}`;
+
+        [outArrow, sum, trigger].forEach(element => {
+          element.style.visibility = 'visible';
+        });
+        calculations.innerHTML = calcul_a_afficher;
+
+        sum.textContent = neurone_ns.resultat_activation.toFixed(2);
+
+        if (neurone_ns.neurone_actif) {
+          trigger.style.visibility = "visible";
+        } else {
+          trigger.style.visibility = "hidden";
+        }
+      }, 1000);
+
+
+
+    }
+
+    /**
+     * Code ajouté par Jonathan Pouliot
+     */
+    const toogleTooltips = () => {
+      const tooltip = document.querySelector('.tooltip');
+
+      document.querySelectorAll("[data-tooltip]").forEach(element => {
+
+        element.addEventListener('mouseenter', e => {
+
+          const boundingRect = e.target.getBoundingClientRect();
+
+          tooltip.style.display = "block";
+          if (e.currentTarget.classList.contains('slider-knob')) {
+            // Empêche de cacher le knob par le tooltip
+            tooltip.style.top = `${boundingRect.top}px`;
+            tooltip.style.left = `${boundingRect.left}px`;
+          } else {
+            tooltip.style.top = `${boundingRect.top - boundingRect.height}px`;
+            tooltip.style.left = `${boundingRect.left - boundingRect.width}px`;
+          }
+
+          tooltip.innerHTML = element.dataset.tooltip;
+        });
+
+        element.addEventListener('mouseleave', e => {
+          tooltip.style.display = 'none';
+        })
+      });
+    }
+
+    const toogleSwitches = () => {
+
+      const switches = document.querySelectorAll('.switch:not(.disabled)');
+
+      switches.forEach(s => {
+        s.addEventListener('click', e => {
+          const currentSwitch = e.currentTarget;
+          const state = currentSwitch.dataset.checked;
+          if (state == "true") {
+            e.currentTarget.dataset.checked = "false";
+            currentSwitch.children[0].style.fill = "#bcc8d3";
+            currentSwitch.children[1].setAttribute("transform", "translate(2.078 2.078)");
+            currentSwitch.dataset.value = 0;
+          } else {
+            e.currentTarget.dataset.checked = "true";
+            currentSwitch.children[0].style.fill = "#3d85c6";
+            currentSwitch.children[1].setAttribute("transform", "translate(39.467 2.078)");
+            currentSwitch.dataset.value = 1;
+          }
+        });
+      });
+    }
+
+    const draggableSliders = () => {
+      const sliders = document.querySelectorAll('.slider');
+
+      sliders.forEach(slider => {
+        const currentTrack = slider.querySelector('.slider-track');
+        const currentKnob = slider.querySelector('.slider-knob');
+        let currentValue = slider.querySelector('.slider-value');
+
+        Draggable.create(currentKnob, {
+          type: "x",
+          bounds: currentTrack,
+          edgeResistance: .99,
+          onPress: function () {
+            document.querySelector('.tooltip').style.display = "none";
+          },
+          onDragEnd: function () {
+            let currentX = 0;
+            const min = 0;
+            const max = 110;
+
+            // Bounding
+            // if (this.x <= min) {
+            //   this.x = min;
+            // } else if (this.x >= 107) { // Workaround de 3 pixels
+            //   this.x = max;
+            // }
+            // Values
+            // if (this.x > (max / 2)) {
+            //   currentX = this.x / max
+            // } else {
+            //   currentX = (this.x / max) - 1;
+            // }
+
+            // Correction mineure - Claude COULOMBE
+            if (this.x <= min) {
+              this.x = min;
+            } else if (this.x >= 107) { // Workaround de 3 pixels
+              this.x = max;
+            }
+            // Values
+            currentX = (this.x - max/2)/(max/2)
+            currentValue.textContent = currentX.toFixed(2);
+          }
+
+        });
+      });
+    }
+
+    const startTraining = () => {
+      document.querySelector('.training-btn').addEventListener('click', e => {
+        e.preventDefault();
+        demarrer_simulateur();
+      });
+
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      toogleTooltips();
+      toogleSwitches();
+      draggableSliders();
+      startTraining();
+    });
+  </script>
+</body>
+
+</html>
