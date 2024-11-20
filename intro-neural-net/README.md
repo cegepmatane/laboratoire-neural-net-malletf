@@ -1,6 +1,6 @@
 ***A VISUAL GUIDE***  
-Train your dragon : [![](https://imgur.com/aCFKXM4.png)  
-Automation : Capture d'écran  
+Train your dragon : ![](https://imgur.com/aCFKXM4.png)  
+Automation : ![](https://imgur.com/JG6bGQh.png)
 Two : Capture d'écran  
 
 **SIMULATEURS de NEURONES**  
