@@ -1,5 +1,5 @@
 ***A VISUAL GUIDE***  
-Train your dragon : Capture d'écran  
+Train your dragon : [![](https://imgur.com/aCFKXM4.png)  
 Automation : Capture d'écran  
 Two : Capture d'écran  
 
