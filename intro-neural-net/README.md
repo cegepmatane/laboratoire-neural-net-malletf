@@ -4,7 +4,7 @@
 - Two : ![](https://imgur.com/MzsV5DJ.png) 
 
 **SIMULATEURS de NEURONES**  
-Capture d'écran  pour le NOT  
+- NOT : ![](https://imgur.com/4qwClwW.png)
 - ET : ![](https://github.com/cegepmatane/laboratoire-neural-net-malletf/blob/main/ET.png?raw=true) 
 - OU : ![](https://github.com/user-attachments/assets/661517a7-b634-4244-b44e-572b74f6e954)
 
