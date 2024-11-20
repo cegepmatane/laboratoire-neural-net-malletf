@@ -10,6 +10,6 @@
 - XOR : ![](https://imgur.com/AhtK2gf.png)
 
 **NUAGES de TENSOR FLOW**  
-Nuage pour droite : Capture d'écran  
-Multi-zone : Capture d'écran  
-Contrentrique : Capture d'écran  
+Nuage pour droite : ![](https://imgur.com/XGSFWeT.png)
+Multi-zone : ![](https://imgur.com/iETfIlx.png) 
+Contrentrique : ![](https://imgur.com/pPpmrfx.png)
