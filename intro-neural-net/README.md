@@ -7,8 +7,7 @@
 - NOT : ![](https://imgur.com/4qwClwW.png)
 - ET : ![](https://github.com/cegepmatane/laboratoire-neural-net-malletf/blob/main/ET.png?raw=true) 
 - OU : ![](https://github.com/user-attachments/assets/661517a7-b634-4244-b44e-572b74f6e954)
-
-Capture d'écran pour le XOR  
+- XOR : ![](https://imgur.com/AhtK2gf.png)
 
 **NUAGES de TENSOR FLOW**  
 Nuage pour droite : Capture d'écran  
