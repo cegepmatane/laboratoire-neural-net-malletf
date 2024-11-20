@@ -4,4 +4,4 @@ Votre copie publique : https://colab.research.google.com/drive/16odhf4fHl11RG2AO
 
 **Appropriation du journal Colab CNN**
 Colab de départ : https://colab.research.google.com/drive/1Vt6R7lM8B4uLg6NJQT7vwKxwGOOKk3pU
-Votre copie publique en français : 
+Votre copie publique en français : https://colab.research.google.com/drive/173u03Ud1J3CWQwWVRfFMjK3oReOlKFbL?usp=sharing
