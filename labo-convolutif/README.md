@@ -9,9 +9,9 @@ Classification de textes : https://colab.research.google.com/github/dipanjanS/nl
 Classification des émotions : https://colab.research.google.com/drive/1dndIeVcxX6rzlycMpH1zDXsoPgbw_ocP#scrollTo=5TRgQqWJAClb  
 Reconnaissance de texte : https://colab.research.google.com/github/keras-team/keras-io/blob/master/examples/vision/ipynb/handwriting_recognition.ipynb (tutorial https://keras.io/examples/vision/handwriting_recognition/)  
 ReCapp de CDRIN  
-Votre choix de CNN approuvé par le professeur  
+Classification des émotions
 
-Votre colab public : 
+Votre colab public : https://colab.research.google.com/drive/1Y0Ph8p4W9xqkWnnsW1zLH_hqjc8j70ZR?usp=sharing
 
 **Dessin de blocs**
 
