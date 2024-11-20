@@ -11,7 +11,7 @@ Reconnaissance de texte : https://colab.research.google.com/github/keras-team/ke
 ReCapp de CDRIN  
 Classification des émotions
 
-Votre colab public : https://colab.research.google.com/drive/1Y0Ph8p4W9xqkWnnsW1zLH_hqjc8j70ZR?usp=sharing
+Votre colab public : https://colab.research.google.com/drive/1dej6l3riAwM7Q1rSVpwot21AAHr_QbNG?usp=sharing
 
 **Dessin de blocs**
 
